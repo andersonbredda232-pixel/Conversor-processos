@@ -219,6 +219,11 @@ fileInput.addEventListener('change', e => {
 });
 
 function normKey(k){ return (k || '').trim(); }
+// Cabeçalhos do SharePoint podem vir com emojis (📅, ⚖️, 🔍, 👤...) e espaços extras:
+// mantém só letras, números, ° / º e espaços.
+function normHeader(h){
+  return (h || '').replace(/^\uFEFF/, '').replace(/[^\p{L}\p{N}°º\s]/gu, '').replace(/\s+/g, ' ').trim();
+}
 
 function handleFile(file){
   fileInfo.style.display = 'block';
@@ -228,7 +233,7 @@ function handleFile(file){
     header: true,
     skipEmptyLines: true,
     encoding: 'UTF-8',
-    transformHeader: h => normKey(h),
+    transformHeader: h => normHeader(h),
     complete: function(res){ processRows(res.data, file.name); },
     error: function(err){ fileInfo.innerHTML = `Erro ao ler o arquivo: ${err.message}`; }
   });
@@ -250,7 +255,7 @@ function populateColumnPicker(){
   });
 
   // auto-detecta uma coluna chamada "Responsável" (com ou sem acento)
-  const auto = csvColumns.find(c => c.toLowerCase().replace('á','a') === 'responsavel');
+  const auto = csvColumns.find(c => c.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'') === 'responsavel');
   responsavelCol = auto || "";
   responsavelSelect.value = responsavelCol;
   colPicker.style.display = 'flex';
